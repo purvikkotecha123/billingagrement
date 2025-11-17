@@ -41,14 +41,16 @@
         <button id="createAgreement">Create Agreement</button>
         <span id="s2"></span>
       </div>
+
+    <div class="box">
+      <h3>Step 3 — Charge using BA ID (Orders v2)</h3>
+
       <div class="row">
         <label>Agreement ID:</label>
         <input id="agreementId" placeholder="B- or I- ..." size="34" />
       </div>
     </div>
-
-    <div class="box">
-      <h3>Step 3 — Charge using BA ID (Orders v2)</h3>
+    
       <div class="row">
         <input id="amount" type="number" step="0.01" value="10.00" />
         <button id="charge">Charge</button>
@@ -76,7 +78,7 @@
       }
 
       // Prefill token_id from ?token=...
-      const tokenFromUrl = getQueryParam('token');
+      const tokenFromUrl = getQueryParam('ba_token');
       if (tokenFromUrl) {
         document.getElementById('tokenId').value = tokenFromUrl;
         const s1 = document.getElementById('s1');
