@@ -143,7 +143,7 @@ app.post("/api/ba/charge", async (req, res) => {
         { amount: { currency_code: currency, value: amount } },
       ],
     });
-  res.json({ order_id: order.id, capture });
+  res.json({ order_id: order.id, order });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
