@@ -58,14 +58,14 @@
         <button id="createToken">Start Billing Agreement</button>
         <div class="status" id="s1"></div>
       </div>
-      <p class="muted">A PayPal window will open. After approving, you’ll be redirected back here with a <code>?ba_token=...</code> (or <code>?token=...</code>) in the URL.</p>
+      <p class="muted">A PayPal window will open. After approving, you’ll be redirected with a <code>ba_token</code> in the URL.</p>
     </div>
 
     <!-- STEP 2 -->
     <div class="box" id="step2">
       <h3>Step 2 — Create the Billing Agreement (get BA ID)</h3>
       <div class="row">
-        <input id="tokenId" type="text" placeholder="token_id from ?ba_token=/token=/token_id=" />
+        <input id="tokenId" type="text" placeholder="ba_token" />
         <button id="createAgreement">Create Agreement</button>
       </div>
       <div class="row full">
@@ -76,18 +76,15 @@
     <!-- STEP 3 -->
     <div class="box" id="step3">
       <h3>Step 3 — Charge using BA ID (Orders v2)</h3>
-
        <div class="row">
-        <input id="agreementId" type="text" placeholder="Agreement ID (B-... or I-...)" />
+        <input id="agreementId" type="text" placeholder="Agreement ID" />
         <div></div>
       </div>
-    </div>
-
-      
       <div class="row">
         <input id="amount" type="number" step="0.01" value="10.00" />
         <button id="charge">Charge</button>
       </div>
+    </div>  
       <div class="row full">
         <div class="status" id="s3"></div>
       </div>
