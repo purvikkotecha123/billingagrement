@@ -71,15 +71,19 @@
       <div class="row full">
         <div class="status" id="s2"></div>
       </div>
-      <div class="row">
+     
+
+    <!-- STEP 3 -->
+    <div class="box" id="step3">
+      <h3>Step 3 — Charge using BA ID (Orders v2)</h3>
+
+       <div class="row">
         <input id="agreementId" type="text" placeholder="Agreement ID (B-... or I-...)" />
         <div></div>
       </div>
     </div>
 
-    <!-- STEP 3 -->
-    <div class="box" id="step3">
-      <h3>Step 3 — Charge using BA ID (Orders v2)</h3>
+      
       <div class="row">
         <input id="amount" type="number" step="0.01" value="10.00" />
         <button id="charge">Charge</button>
@@ -167,7 +171,10 @@
           const amount = document.getElementById('amount').value || '10.00';
           s3.textContent = 'Creating & capturing order...';
           const r = await post('/api/ba/charge', { agreement_id, amount });
-          s3.innerHTML = `<span class="ok">Captured order - Transaction Id <code>${r.order_id}</code></span>`;
+          const cap = r.capture?.purchase_units?.[0]?.payments?.captures?.[0];
+          const capId = cap?.id || "(missing)";
+          const capStatus = cap?.status || "(unknown)";
+          s3.innerHTML = `<span class="ok">Captured transaction id <code>${capId}</code> — status: <code>${capStatus}</code></span>`;
         } catch (e) {
           s3.innerHTML = `<span class="err">${e.message}</span>`;
         }
