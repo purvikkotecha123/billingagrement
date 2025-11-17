@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <title>PayPal Billing Agreements v1 Demo</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        max-width: 760px; margin: 32px auto; padding: 0 16px;
+      }
+      button { padding: 10px 16px; border-radius: 8px; border: 1px solid #ccc; background: #f8f8f8; cursor: pointer; }
+      input { padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+      .row { display: flex; gap: 12px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+      code { background: #f3f3f3; padding: 2px 6px; border-radius: 6px; }
+      .ok { color: green; } .err { color: #a00; }
+      .muted { color: #666; font-size: 0.9em; }
+      .box { padding: 12px; background: #fafafa; border: 1px solid #eee; border-radius: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>Billing Agreements v1 (Reference Transactions)</h1>
+    <p class="muted">Flow: Create <code>agreement-token</code> → Buyer approves → Create <strong>Billing Agreement (B-/I-)</strong> → Charge using BA ID via Orders v2.</p>
+
+    <div class="box">
+      <h3>Step 1 — Create token & approve</h3>
+      <div class="row">
+        <button id="createToken">Start Billing Agreement</button>
+        <span id="s1"></span>
+      </div>
+      <p class="muted">A PayPal window will open. After approving, you’ll be redirected back to this page with a <code>?token=...</code> in the URL.</p>
+    </div>
+
+    <div class="box">
+      <h3>Step 2 — Create the Billing Agreement (get BA ID)</h3>
+      <div class="row">
+        <input id="tokenId" placeholder="token_id from ?token=..." size="40" />
+        <button id="createAgreement">Create Agreement</button>
+        <span id="s2"></span>
+      </div>
+      <div class="row">
+        <label>Agreement ID:</label>
+        <input id="agreementId" placeholder="B- or I- ..." size="34" />
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Step 3 — Charge using BA ID (Orders v2)</h3>
+      <div class="row">
+        <input id="amount" type="number" step="0.01" value="10.00" />
+        <button id="charge">Charge</button>
+        <span id="s3"></span>
+      </div>
+    </div>
+
+    <p class="muted">Tip: Pop-ups must be allowed for this page when opening the PayPal approval window.</p>
+
+    <script>
+      // Tiny helpers
+      async function post(url, body) {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body || {})
+        });
+        const text = await r.text();
+        if (!r.ok) throw new Error(text || r.statusText);
+        return text ? JSON.parse(text) : {};
+      }
+      function getQueryParam(key) {
+        const u = new URL(window.location.href);
+        return u.searchParams.get(key);
+      }
+
+      // Prefill token_id from ?token=...
+      const tokenFromUrl = getQueryParam('token');
+      if (tokenFromUrl) {
+        document.getElementById('tokenId').value = tokenFromUrl;
+        const s1 = document.getElementById('s1');
+        s1.innerHTML = `<span class="ok">Returned with token: <code>${tokenFromUrl}</code></span>`;
+      }
+      if (getQueryParam('canceled')) {
+        document.getElementById('s1').innerHTML = `<span class="err">Buyer canceled</span>`;
+      }
+      if (getQueryParam('approved')) {
+        // Some accounts return only approval flags; token still supplied in ?token
+        document.getElementById('s1').innerHTML = `<span class="ok">Buyer approved — check for token in URL</span>`;
+      }
+
+      // Step 1: Create agreement-token & open approval
+      document.getElementById('createToken').onclick = async () => {
+        const s1 = document.getElementById('s1');
+        try {
+          s1.textContent = 'Creating token...';
+          const r = await post('/api/ba/create-token');
+          if (r.approve_url) {
+            s1.innerHTML = `<span class="ok">Token created. Opening approval...</span>`;
+            window.open(r.approve_url, '_blank'); // allow pop-ups
+          } else {
+            s1.innerHTML = `<span class="err">No approval URL returned</span>`;
+          }
+        } catch (e) {
+          s1.innerHTML = `<span class="err">${e.message}</span>`;
+        }
+      };
+
+      // Step 2: Exchange token -> Billing Agreement
+      document.getElementById('createAgreement').onclick = async () => {
+        const s2 = document.getElementById('s2');
+        try {
+          const token_id = (document.getElementById('tokenId').value || '').trim();
+          if (!token_id) throw new Error('token_id is required');
+          s2.textContent = 'Creating agreement...';
+          const r = await post('/api/ba/create-agreement', { token_id });
+          document.getElementById('agreementId').value = r.agreement_id || '';
+          s2.innerHTML = `<span class="ok">Agreement ${r.agreement_id} (${r.state})</span>`;
+        } catch (e) {
+          s2.innerHTML = `<span class="err">${e.message}</span>`;
+        }
+      };
+
+      // Step 3: Charge via Orders v2 using BA ID
+      document.getElementById('charge').onclick = async () => {
+        const s3 = document.getElementById('s3');
+        try {
+          const agreement_id = (document.getElementById('agreementId').value || '').trim();
+          if (!agreement_id) throw new Error('agreement_id is required');
+          const amount = document.getElementById('amount').value || '10.00';
+          s3.textContent = 'Creating & capturing order...';
+          const r = await post('/api/ba/charge', { agreement_id, amount });
+          s3.innerHTML = `<span class="ok">Captured order <code>${r.order_id}</code></span>`;
+        } catch (e) {
+          s3.innerHTML = `<span class="err">${e.message}</span>`;
+        }
+      };
+    </script>
+  </body>
+</html>
