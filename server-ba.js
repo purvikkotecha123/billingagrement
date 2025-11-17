@@ -93,7 +93,7 @@ app.post("/api/ba/create-token", async (req, res) => {
       "/v1/billing-agreements/agreement-tokens",
       payload
     );
-    const approve = (tokenRes.links || []).find((l) => l.rel === "approve");
+    const approve = (tokenRes.links || []).find((l) => l.rel === "approval_url");
     res.json({
       id: tokenRes.token_id || tokenRes.id,
       approve_url: approve?.href,
@@ -137,7 +137,7 @@ app.post("/api/ba/charge", async (req, res) => {
     const order = await pp("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",
       payment_source: {
-        billing_agreement: { billing_agreement_id: agreement_id },
+        token: { id: agreement_id , type : "BILLING_AGREEMENT" },
       },
       purchase_units: [
         { amount: { currency_code: currency, value: amount } },
