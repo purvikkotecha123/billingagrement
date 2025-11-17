@@ -143,10 +143,7 @@ app.post("/api/ba/charge", async (req, res) => {
         { amount: { currency_code: currency, value: amount } },
       ],
     });
-
-    // Capture immediately
-    const capture = await pp("POST", `/v2/checkout/orders/${order.id}/capture`);
-    res.json({ order_id: order.id, capture });
+  res.json({ order_id: order.id, capture });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
